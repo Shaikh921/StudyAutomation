@@ -8,15 +8,39 @@ This guide explains how to deploy your **60-Day AI-Powered CSE Career Coach** so
 
 | Deployment Option | Ideal For | Cost | Laptop Can Be Off? | Setup Difficulty |
 |---|---|---|---|---|
-| **Option 1: Cloud VPS (Docker / systemd)** | 24/7 Autonomous Daily Coach | $0 - $5 / mo | ✅ YES | ⚡ Recommended (Easy) |
-| **Option 2: Render.com / Railway.app** | Free Cloud Hosting | Free tier | ✅ YES | ⚡ Easiest Cloud |
+| **Option 1: Render.com / Railway.app** | Free Cloud Hosting | Free tier | ✅ YES | ⚡ Easiest Cloud |
+| **Option 2: Cloud VPS (systemd)** | 24/7 Autonomous Daily Coach | $0 - $5 / mo | ✅ YES | ⚡ Recommended |
 | **Option 3: Local Windows Service (NSSM)** | Local PC Running 24/7 | Free | ❌ NO | 🔧 Easy Local |
 
 ---
 
-## 🌐 OPTION 1: DEPLOY ON CLOUD SERVER (VPS - Docker / Docker Compose)
+## ☁️ OPTION 1: DEPLOY ON RENDER.COM / RAILWAY.APP (Free Cloud Hosting)
 
-Deploying on a Cloud VPS (such as DigitalOcean, Hetzner, AWS EC2, or Vultr) using Docker ensures your platform **never sleeps**, sending your Telegram study plan every morning at 08:00 AM Kolkata time.
+Deploy for free on Render or Railway so your platform runs 24/7 online.
+
+### Deploying on Render.com:
+1. Push your `automation_engine/` code to a private GitHub repository.
+2. Sign up on [Render.com](https://render.com).
+3. Click **New +** -> **Web Service**.
+4. Connect your GitHub repository.
+5. Set build and start settings:
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python run.py`
+6. Under **Environment Variables**, add:
+   - `GEMINI_API_KEY`
+   - `TELEGRAM_BOT_TOKEN`
+   - `TELEGRAM_CHAT_ID`
+   - `EMAIL_SENDER`
+   - `EMAIL_APP_PASSWORD`
+   - `TIMEZONE` = `Asia/Kolkata`
+7. Click **Create Web Service**.
+
+---
+
+## 🌐 OPTION 2: DEPLOY ON CLOUD SERVER (Linux VPS via systemd)
+
+Deploying on a Cloud VPS (such as DigitalOcean, Hetzner, AWS EC2, or Vultr) using `systemd` ensures your platform **never sleeps**, sending your Telegram study plan every morning at 08:00 AM Kolkata time.
 
 ### Step 1: Upload Project Files to your Server
 Upload or git clone your `automation_engine/` directory to your cloud server:
@@ -48,50 +72,37 @@ EMAIL_SMTP_PORT=587
 TIMEZONE=Asia/Kolkata
 ```
 
-### Step 3: Run with 1-Command Docker Compose
-Run the container in background daemon mode:
-```bash
-docker compose up -d --build
+### Step 3: Set up systemd Service
+Create a systemd service file `/etc/systemd/system/cse-coach.service`:
+```ini
+[Unit]
+Description=60-Day CSE Career Coach Service
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/automation_engine
+ExecStart=/opt/automation_engine/.venv/bin/python run.py
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-### Step 4: Verify Container Status
-Check that your server is running:
+Enable and start the service:
 ```bash
-docker compose ps
-docker compose logs -f
+systemctl daemon-reload
+systemctl enable cse-coach
+systemctl start cse-coach
 ```
 
 ---
 
-## ☁️ OPTION 2: DEPLOY ON RENDER.COM / RAILWAY.APP (Free Cloud Hosting)
+## 💻 OPTION 3: RUN 24/7 ON LOCAL WINDOWS PC (Windows Task Scheduler)
 
-If you don't own a Linux server, you can deploy for free on Render or Railway.
+If you keep your Windows PC on during the day and want the platform to start automatically whenever Windows boots up, install it as a Windows Background Task.
 
-### Deploying on Render.com:
-1. Push your `automation_engine/` code to a private GitHub repository.
-2. Sign up on [Render.com](https://render.com).
-3. Click **New +** -> **Web Service**.
-4. Connect your GitHub repository.
-5. Set build and start settings:
-   - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `python run.py`
-6. Under **Environment Variables**, add:
-   - `GEMINI_API_KEY`
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_CHAT_ID`
-   - `EMAIL_SENDER`
-   - `EMAIL_APP_PASSWORD`
-   - `TIMEZONE` = `Asia/Kolkata`
-7. Click **Create Web Service**.
-
----
-
-## 💻 OPTION 3: RUN 24/7 ON LOCAL WINDOWS PC (NSSM Windows Service)
-
-If you keep your Windows PC on during the day and want the platform to start automatically whenever Windows boots up, install it as a Windows Background Service.
-
-### Method A: Using Windows Task Scheduler (Simple)
+### Method: Using Windows Task Scheduler
 1. Press `Win + R`, type `taskschd.msc`, and press Enter.
 2. Click **Create Basic Task...** in the right sidebar.
 3. Name: `CSE Career Coach 60-Day Platform`.
@@ -102,15 +113,6 @@ If you keep your Windows PC on during the day and want the platform to start aut
 7. Add arguments: `run.py`
 8. Start in: `c:\Automation\automation_engine`
 9. Click **Finish**.
-
-### Method B: Using NSSM (Non-Sucking Service Manager)
-1. Download NSSM from `https://nssm.cc/download`.
-2. Open PowerShell as Administrator and run:
-   ```powershell
-   nssm install CseCareerCoach "c:\Automation\automation_engine\.venv\Scripts\python.exe" "c:\Automation\automation_engine\run.py"
-   nssm set CseCareerCoach AppDirectory "c:\Automation\automation_engine"
-   nssm start CseCareerCoach
-   ```
 
 ---
 

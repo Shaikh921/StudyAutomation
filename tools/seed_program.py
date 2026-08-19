@@ -25,14 +25,12 @@ def seed_program():
             user = User(
                 name="CSE Student",
                 email="cse_student@example.com",
-                whatsapp_number="+919876543210",
                 timezone="Asia/Kolkata",
-                program_start_date=datetime.now(timezone.utc),
-                available_hours_per_day=6.5,
+                program_status="NOT_STARTED",
+                daily_study_hours=6,
                 target_roles="ML Engineer,Python Developer,Software Engineer,Backend Developer",
                 preferred_locations="India,Remote,Pune,Bengaluru,Hyderabad",
-                remote_preference=True,
-                notification_channels="console,email"
+                notification_channels="console,email,telegram"
             )
             db.add(user)
             db.commit()
@@ -51,10 +49,6 @@ def seed_program():
                 max_experience_years=2
             )
             db.add(pref)
-
-        # Generate initial study plan
-        plan = PlannerService.generate_daily_plan(db, user)
-        print(f"Generated Initial Day {plan.day_number} Study Plan.")
 
         # Ingest initial fresh jobs
         job_service = JobSearchService()
