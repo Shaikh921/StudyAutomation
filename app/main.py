@@ -47,10 +47,33 @@ app.include_router(telegram_router.router)
 @app.on_event("startup")
 def startup_event():
     init_db()
+    # Auto-seed database if empty (e.g. fresh cloud deployment)
+    try:
+        from app.database.database import SessionLocal
+        from app.models.user import User
+        from app.models.dsa import DSAQuestion
+        from tools.import_dsa_bank import import_questions
+        from tools.seed_program import seed_program
+
+        db = SessionLocal()
+        user_count = db.query(User).count()
+        dsa_count = db.query(DSAQuestion).count()
+        db.close()
+
+        if dsa_count == 0:
+            print("Auto-importing 250+ DSA question bank...")
+            import_questions()
+        if user_count == 0:
+            print("Auto-seeding default student profile...")
+            seed_program()
+    except Exception as e:
+        print(f"Auto-seed notice: {e}")
+
     try:
         init_scheduler()
     except Exception as e:
         print(f"Scheduler startup notice: {e}")
+
 
 
 @app.get("/dashboard", response_class=HTMLResponse)
